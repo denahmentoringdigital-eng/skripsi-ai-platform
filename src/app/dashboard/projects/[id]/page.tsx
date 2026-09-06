@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import ProjectDetailClient from "@/components/ProjectDetailClient";
+import type { ChapterStatus } from "@/types/models";
 
 export default async function ProjectDetailPage({
   params,
@@ -41,7 +42,7 @@ export default async function ProjectDetailPage({
       number: c.number,
       title: c.title,
       content: c.content,
-      status: c.status,
+      status: c.status as ChapterStatus,
       projectId: c.projectId,
     })),
     references: project.references.map((r) => ({
