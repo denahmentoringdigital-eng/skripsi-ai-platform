@@ -74,10 +74,11 @@ async function mayarFetch<T = unknown>(path: string, init?: RequestInit): Promis
 
 interface MayarMemberCustomer {
   id: string;
+  customerId?: string;
   memberId?: string;
   status?: string;
   membershipTierId?: string;
-  customer?: { name?: string; email?: string; mobile?: string };
+  customer?: { id?: string; name?: string; email?: string; mobile?: string };
 }
 
 // Cari member Mayar yang sudah pernah terdaftar untuk email + tier tertentu.
@@ -106,7 +107,9 @@ async function registerMayarMember(opts: {
   }
 
   try {
-    const res = await mayarFetch<{ data: { membershipCustomer: MayarMemberCustomer } }>(
+    // Catatan: respons sukses Mayar untuk endpoint ini adalah { data: <member object> },
+    // BUKAN { data: { membershipCustomer: <member object> } } seperti dugaan awal.
+    const res = await mayarFetch<{ data: MayarMemberCustomer }>(
       `/memberships/members/create`,
       {
         method: "POST",
@@ -122,7 +125,7 @@ async function registerMayarMember(opts: {
         }),
       }
     );
-    return { member: res.data.membershipCustomer, tierId };
+    return { member: res.data, tierId };
   } catch (err) {
     if (err instanceof MayarApiError && err.status === 400 && /terdaftar/i.test(err.message)) {
       // Sudah pernah daftar di tier ini sebelumnya -> pakai record yang sudah ada,
@@ -169,9 +172,11 @@ export async function createUpgradeCheckout(opts: {
   plan: MayarPlan;
 }): Promise<{ payUrl: string; mayarMemberId: string; tierId: string }> {
   const { member, tierId } = await registerMayarMember(opts);
-  const memberId = member.id;
+  // Endpoint invoice/create butuh kode member pendek (mis. "PNFDBTHK" / member.memberId),
+  // BUKAN member.id (UUID internal) -- kalau dikirim UUID, Mayar balas 404 "tidak ditemukan".
+  const memberId = member.memberId;
   if (!memberId) {
-    throw new Error("Tidak menemukan ID member dari respons Mayar.");
+    throw new Error("Tidak menemukan kode member (memberId) dari respons Mayar.");
   }
   const { payUrl } = await createMayarMemberInvoice(memberId);
   return { payUrl, mayarMemberId: memberId, tierId };
