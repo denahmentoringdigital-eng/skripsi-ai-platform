@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateChapterDraft } from "@/lib/ai";
 import { PLAN_LIMITS } from "@/lib/constants";
+import { getEffectivePlan } from "@/lib/plan";
 
 export async function POST(
   _req: Request,
@@ -21,7 +22,7 @@ export async function POST(
     return NextResponse.json({ error: "User tidak ditemukan." }, { status: 404 });
   }
 
-  const planKey = user.plan as keyof typeof PLAN_LIMITS;
+  const planKey = getEffectivePlan(user);
   const limit = PLAN_LIMITS[planKey].monthlyCredits;
   if (user.aiCreditsUsed >= limit) {
     return NextResponse.json(

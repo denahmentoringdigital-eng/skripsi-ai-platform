@@ -2,6 +2,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { PLAN_LIMITS } from "@/lib/constants";
+import UpgradeButton from "@/components/UpgradeButton";
 
 const PLAN_FEATURES: Record<keyof typeof PLAN_LIMITS, string[]> = {
   FREE: [
@@ -72,20 +73,25 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href="/register"
-                  className={isPopular ? "btn-primary w-full" : "btn-secondary w-full"}
-                >
-                  {key === "FREE" ? "Mulai Gratis" : "Pilih Paket"}
-                </Link>
+                {key === "FREE" ? (
+                  <Link href="/register" className="btn-secondary w-full">
+                    Mulai Gratis
+                  </Link>
+                ) : (
+                  <UpgradeButton
+                    plan={key}
+                    label="Pilih Paket"
+                    className={isPopular ? "btn-primary w-full" : "btn-secondary w-full"}
+                  />
+                )}
               </div>
             );
           })}
         </div>
 
         <p className="mt-10 text-center text-xs text-slate-400">
-          Pembayaran paket berbayar akan diaktifkan setelah integrasi payment gateway
-          (mis. Midtrans/Xendit) disiapkan oleh pemilik platform.
+          Pembayaran diproses aman lewat Mayar.id. Setelah bayar, akses paket aktif otomatis
+          dan kamu akan diarahkan kembali ke dashboard.
         </p>
       </main>
       <Footer />

@@ -16,11 +16,29 @@ model User {
   campus        String?
   major         String?
   plan          String    @default("FREE")
+  planExpiresAt DateTime?
+  mayarMemberId String?   @unique
   aiCreditsUsed Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  projects ThesisProject[]
+  projects     ThesisProject[]
+  transactions Transaction[]
+}
+
+model Transaction {
+  id                 String   @id @default(cuid())
+  plan               String
+  amount             Int
+  status             String   @default("PENDING")
+  mayarTransactionId String?  @unique
+  mayarMemberId      String?
+  rawPayload         String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ThesisProject {
