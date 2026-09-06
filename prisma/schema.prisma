@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  campus        String?
+  major         String?
+  plan          String    @default("FREE")
+  aiCreditsUsed Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  projects ThesisProject[]
+}
+
+model ThesisProject {
+  id          String   @id @default(cuid())
+  title       String
+  topic       String
+  major       String
+  citationFmt String   @default("APA")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapters Chapter[]
+  references Reference[]
+}
+
+model Chapter {
+  id        String        @id @default(cuid())
+  number    Int
+  title     String
+  content   String        @default("")
+  status    String        @default("EMPTY")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  projectId String
+  project   ThesisProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, number])
+}
+
+model Reference {
+  id        String   @id @default(cuid())
+  authors   String
+  year      String
+  title     String
+  source    String
+  formatted String
+  createdAt DateTime @default(now())
+
+  projectId String
+  project   ThesisProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
