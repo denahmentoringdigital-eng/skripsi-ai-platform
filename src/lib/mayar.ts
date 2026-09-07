@@ -125,7 +125,17 @@ async function registerMayarMember(opts: {
         }),
       }
     );
-    return { member: res.data, tierId };
+    let member = res.data;
+    if (!member?.memberId) {
+      // Mayar tidak selalu mengembalikan memberId langsung di respons create --
+      // ini terjadi saat email yang sama sudah pernah jadi member (mis. pindah
+      // dari tier PRO ke CAMPUS): request tetap sukses (200) dan tier ter-update,
+      // tapi body respons tidak menyertakan kode member pendek. Ambil ulang via
+      // pencarian member supaya invoice/create tetap bisa jalan.
+      const existing = await findExistingMayarMember(opts.email, tierId);
+      if (existing?.memberId) member = existing;
+    }
+    return { member, tierId };
   } catch (err) {
     if (err instanceof MayarApiError && err.status === 400 && /terdaftar/i.test(err.message)) {
       // Sudah pernah daftar di tier ini sebelumnya -> pakai record yang sudah ada,
