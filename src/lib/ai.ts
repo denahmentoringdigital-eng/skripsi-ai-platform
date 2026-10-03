@@ -55,12 +55,34 @@ Detail penelitian:
 Tulis draf bab ini selengkap mungkin (target 600-1000 kata), terstruktur dengan sub-heading, siap dijadikan starting point untuk ditulis ulang/disempurnakan mahasiswa.`;
 
   const anthropic = getClient();
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-5",
-    max_tokens: 4000,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
-  });
+  let response;
+  try {
+    response = await anthropic.messages.create({
+      model: "claude-sonnet-4-5",
+      max_tokens: 4000,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userPrompt }],
+    });
+  } catch (err) {
+    // Detail asli tetap tercatat di log server (Vercel), tapi user hanya melihat
+    // pesan ramah -- bukan JSON mentah dari Anthropic.
+    console.error("Anthropic API error:", err);
+    if (err instanceof Anthropic.APIError) {
+      const raw = String(err.message || "").toLowerCase();
+      if (raw.includes("credit balance")) {
+        throw new Error(
+          "Layanan AI sedang tidak tersedia sementara (kuota layanan habis). Jatah generate kamu tidak terpakai. Silakan coba lagi nanti atau hubungi admin."
+        );
+      }
+      if (err.status === 401) {
+        throw new Error("Layanan AI belum terkonfigurasi dengan benar. Silakan hubungi admin.");
+      }
+      if (err.status === 429) {
+        throw new Error("Layanan AI sedang sibuk. Tunggu sebentar lalu coba generate lagi.");
+      }
+    }
+    throw new Error("Gagal generate draf. Coba lagi beberapa saat.");
+  }
 
   const textBlock = response.content.find((block) => block.type === "text");
   if (!textBlock || textBlock.type !== "text") {

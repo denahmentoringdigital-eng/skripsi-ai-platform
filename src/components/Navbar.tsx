@@ -32,6 +32,11 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {status === "authenticated" ? (
             <>
+              {session?.user?.isAdmin && (
+                <Link href="/admin" className="text-sm font-medium text-brand-600 hover:underline">
+                  Admin
+                </Link>
+              )}
               <Link href="/dashboard" className="btn-secondary !px-4 !py-2">
                 Dashboard
               </Link>

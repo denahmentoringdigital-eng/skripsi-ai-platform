@@ -2,6 +2,7 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { isAdminEmail } from "@/lib/admin-email";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -47,6 +48,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = (user as { id: string }).id;
         token.plan = (user as { plan?: string }).plan;
+        token.isAdmin = isAdminEmail(user.email);
       }
       return token;
     },
@@ -54,6 +56,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
         (session.user as { plan?: string }).plan = token.plan as string;
+        (session.user as { isAdmin?: boolean }).isAdmin = Boolean(token.isAdmin);
       }
       return session;
     },
